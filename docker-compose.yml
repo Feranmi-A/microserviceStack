@@ -24,7 +24,7 @@ services:
   # Banking Microservice
   banking:
     build:
-      context: ./BankingPython-main/backend
+      context: ./banking-app
       dockerfile: Dockerfile
     environment:
       - MONGO_URI=mongodb://mongo:27017/bank_app
