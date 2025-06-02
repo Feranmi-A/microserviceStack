@@ -14,24 +14,17 @@ services:
       mongo:
         condition: service_healthy
 
-  # Student Portfolio (Static Site)
-  portfolio:
-    build:
-      context: ./portfolio
-    # No ports exposed - served through Nginx
-    restart: unless-stopped
-
   # Banking Microservice
   banking:
     build:
-      context: ./banking-app
+      context: ./banking-app/backend
       dockerfile: Dockerfile
     environment:
       - MONGO_URI=mongodb://mongo:27017/bank_app
       - SECRET_KEY=supersecretkey
       - FLASK_ENV=production
     expose:
-      - "5000"  # Internal only
+      - "5000"
     depends_on:
       mongo:
         condition: service_healthy
@@ -47,7 +40,7 @@ services:
     volumes:
       - mongo_data:/data/db
     ports:
-      - "27017:27017"  # Exposed for debugging
+      - "27017:27017"
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 30s
