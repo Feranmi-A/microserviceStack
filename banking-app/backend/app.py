@@ -1,5 +1,5 @@
 
-from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, session, url_for, flash
 from flask_pymongo import PyMongo
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
@@ -12,13 +12,13 @@ app.secret_key = os.environ.get('SECRET_KEY', 'supersecretkey')
 app.config["MONGO_URI"] = os.environ.get('MONGO_URI', 'mongodb://mongo:27017/bank_app')
 mongo = PyMongo(app)
 
-@app.route('/banking/')
+@app.route('/')
 def home():
     if 'user_id' in session:
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
-@app.route('/banking/register', methods=['GET', 'POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         first_name = request.form.get('first_name')
@@ -46,7 +46,7 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html')
 
-@app.route('/banking/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -59,14 +59,14 @@ def login():
         return redirect(url_for('login'))
     return render_template('login.html')
 
-@app.route('/banking/dashboard')
+@app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     user = mongo.db.users.find_one({'_id': ObjectId(session['user_id'])})
     return render_template('dashboard.html', user=user)
 
-@app.route('/banking/deposit', methods=['POST'])
+@app.route('/deposit', methods=['POST'])
 def deposit():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -90,7 +90,7 @@ def deposit():
     flash('Deposit successful', 'success')
     return redirect(url_for('dashboard'))
 
-@app.route('/banking/withdraw', methods=['POST'])
+@app.route('/withdraw', methods=['POST'])
 def withdraw():
     if 'user_id' not in session:
         return redirect(url_for('login'))
@@ -114,15 +114,11 @@ def withdraw():
     flash('Withdrawal successful', 'success')
     return redirect(url_for('dashboard'))
 
-@app.route('/banking/logout')
+@app.route('/logout')
 def logout():
     session.pop('user_id', None)
     flash('Logged out', 'info')
     return redirect(url_for('login'))
-
-@app.route('/banking/health')
-def health():
-    return jsonify({"status": "healthy"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
