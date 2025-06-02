@@ -1,0 +1,58 @@
+version: '3.8'
+services:
+  # API Gateway (Nginx)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./portfolio/public:/usr/share/nginx/html:ro
+    depends_on:
+      banking:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+
+  # Student Portfolio (Static Site)
+  portfolio:
+    build:
+      context: ./portfolio
+    # No ports exposed - served through Nginx
+    restart: unless-stopped
+
+  # Banking Microservice
+  banking:
+    build:
+      context: ./BankingPython-main/backend
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/bank_app
+      - SECRET_KEY=supersecretkey
+      - FLASK_ENV=production
+    expose:
+      - "5000"  # Internal only
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MongoDB Database
+  mongo:
+    image: mongo:6
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"  # Exposed for debugging
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mongo_data:
